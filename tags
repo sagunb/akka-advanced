@@ -1,0 +1,29 @@
+#!/bin/bash
+exec scala "$0" "$@"
+!#
+
+import scala.io.Source
+import scala.sys.process._
+
+val branch = args.headOption getOrElse "master"
+s"git checkout $branch".!!
+
+val idAndCommentList = {
+  val gitLog = Source fromString "git log --oneline".!!
+  gitLog.getLines.toList map { line =>
+    val idAndComment = line splitAt 7
+    idAndComment.copy(_2 = idAndComment._2.trim)
+  }
+}
+
+def gitTagForComment(tag: String, comment: String) = {
+  val ids = idAndCommentList collect { case (id, c) if c startsWith comment => id }
+  ids.headOption map gitTag(tag) getOrElse sys.error(s"No commit with comment $comment!")
+}
+
+def gitTag(tag: String)(id: String) =
+  s"git tag -f $tag $id".!
+
+gitTagForComment("aas-first", "Initial state")
+gitTag("aas-last")("head")
+"git push -f --tags".!
