@@ -25,7 +25,7 @@ We recommend using the following tools:
 This course is best suited for individuals that have knowledge of Akka and Scala as covered in our [Fast Track to Akka with Scala](http://www.typesafe.com/subscription/training) course. Also, we need access to the internet and a computer with the following software installed:
 
 - Unix compatible shell
-- JVM 1.7 or higher
+- JVM 1.8 or higher
 - Scala 2.11 or higher
 - Sbt 0.13.8 or higher
 
@@ -37,7 +37,7 @@ If you are running OSX, then you are on a **nix** system already. Otherwise inst
 
 ---
 
-### JVM 1.7 or Higher
+### JVM 1.8 or Higher
 
 If you are running OSX and a [Homebrew Cask](https://github.com/caskroom/homebrew-cask) user, from a terminal run:
 
@@ -284,7 +284,13 @@ Follow these instructions if you want to use IntelliJ IDEA:
 
 ### Akka Collect
 
-DESCRIPTION GOES HERE
+Welcome to  Akka Collect, a multi-player game, where players are in competition to collect the most coins. In this courseware, we work through a series of exercises as laid out in the Advanced Akka with Scala slide deck and experience:
+
+- Players are placed on a grid and try to **collect coins**.
+- On each move, players on see a **nearby section** of the grid.
+- When a **coin is collected**, a new one is **created** somewhere else on the grid.
+
+Our mission is starting with the provided implementation, make Akka Collect **distributed** and **highly available**!
 
 ---
 
@@ -292,6 +298,10 @@ DESCRIPTION GOES HERE
 
 0. Exercise 0 > Initial State
 1. Exercise 1 > Complete Initial State
-
-OUTLINE GOES HERE
-
+2. Exercise 2 > Remoting
+3. Exercise 3 > Cluster Events
+4. Exercise 4 > Cluster Aware Routers
+5. Exercise 5 > Cluster Singleton
+6. Exercise 6 > Cluster Sharding
+7. Exercise 7 > Persistent Actors
+8. Exercise 8 > Data Replication

@@ -37,3 +37,9 @@ project/plugins/project/
 # Akka Persistence
 journal/
 snapshots/
+
+# sbt-koan
+.koan*
+
+# CourseGen
+.tag
