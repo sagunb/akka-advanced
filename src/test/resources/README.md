@@ -1,27 +1,21 @@
-cluster-aware-routers
+cluster-singleton
 
-## Exercise 4 > Cluster Aware Routers
+## Exercise 5 > Cluster Singleton
 
-In this exercise we split off the `ScoresRepository` as a separate instance and connect by way of a group router using Akka cluster aware routing. In order to do this, we will focus on changing the following:
+In this exercise we use a **Cluster Singleton** to make the `PlayerRegistry` strictly consistent and highly available. In order to do this, we will focus on changing the following:
 
-- `application.conf` (configure group routing):
-    - Create a `deployment` section.  
-    - Configure `random-group` router.
-    - Use `/user/scores-repository` as the routees path.
-    - Turn `allow-local-routees` off.
-- `GameEngine.scala` (remove some code):
-    - The `scoresRepository` is now accessed via `FromConfig`
-    - **HINT**: Use a factory method (createScoresRepository) to facilitate testing
-    - **HINT**: `Props` factory.
-    - **HINT**: Actor constructor.
-- `GameEngineApp.scala` (remove some code):
-    - **HINT**: Think `scoresRepository`.
-- `Tournament.scala` (provision against failure):
-    - Because the `scoresRepository` is remote, messages could get lost. 
-    - **HINT**: Think `ask` and `pipeTo`.
-    - Log `No answer form scores repository, scores might have been lost!` at `error`.
+- `GameEngine.scala` (reference the cluster singleton):
+    - Remove the listening to **cluster events**.
+    - Use a **cluster singleton** proxy instead.
+    - **HINT** factory method (createPlayerRegistry) for testing
+    - Pass the proxy to `Tournament`.
+- `PlayerRegistryApp.scala` (setup the cluster singleton):
+    - Create a **cluster singleton** manager for `PlayerRegistry` with a role of `player-registry`.
+    - You will need to use `ClusterSingletonManager` and `ClusterSingletonProxy`.
+- `Tournament.scala`:
+    - **HINT**: `playerRegistry` is no longer an `ActorSelection`.
 
-We have our taken our third step in making Akka Collect **reactive** by introducing additional **elasticity** and **resilience**. Now it is time to test our solution.
+Because the `PlayerRegistry` is crucial to Akka Collect, we have made it consistent as well as available. Now it is time to test our solution.
 
 - Use the `ge` command alias to bootstrap `GameEngine`.
 - Open a second terminal window and start another `sbt` session:
