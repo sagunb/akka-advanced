@@ -11,9 +11,13 @@ class GameEngineSpec extends BaseAkkaSpec {
     "transition into GameEngine.State.Running with a tournament" in {
       val engine = TestFSMRef(new GameEngine(
         tournamentInterval = 1 millisecond,
-        playerRegistry = system.deadLetters,
+        playerRegistryAddress = Address("akka", "player-registry"),
         scoresRepository = system.deadLetters
-      ))
+      ) {
+        override def createPlayerRegistry(): ActorSelection = {
+          context.actorSelection(system.deadLetters.path)
+        }
+      })
 
       awaitCond(engine.stateName == GameEngine.State.Running)
       awaitCond(engine.stateData.tournament.isDefined)
@@ -26,7 +30,7 @@ class GameEngineSpec extends BaseAkkaSpec {
 
       class TestEngine extends GameEngine(
         tournamentInterval = 1 millisecond,
-        playerRegistry = system.deadLetters,
+        playerRegistryAddress = Address("akka", "player-registry"),
         scoresRepository = system.deadLetters
       ) {
 
@@ -41,6 +45,10 @@ class GameEngineSpec extends BaseAkkaSpec {
           tournaments = next
 
           current
+        }
+
+        override def createPlayerRegistry(): ActorSelection = {
+          context.actorSelection(system.deadLetters.path)
         }
       }
       val engine = TestFSMRef(new TestEngine)
