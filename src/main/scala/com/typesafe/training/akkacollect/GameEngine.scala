@@ -54,9 +54,7 @@ class GameEngine(tournamentInterval: FiniteDuration, playerRegistry: ActorRef, s
 
   private def startTournament(): ActorRef = {
     log.info("Starting tournament")
-    val tournament = context.actorOf(Tournament.props(playerRegistry, scoresRepository, settings.tournament.maxPlayerCountPerGame))
-    context.watch(tournament)
-    tournament
+    context.watch(createTournament())
   }
 
   protected def createTournament(): ActorRef = {
