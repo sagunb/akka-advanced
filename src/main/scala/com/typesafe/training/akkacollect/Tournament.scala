@@ -1,15 +1,17 @@
 /**
- * Copyright © 2014, 2015 Typesafe, Inc. All rights reserved. [http://www.typesafe.com]
- */
+  * Copyright © 2014, 2015 Typesafe, Inc. All rights reserved. [http://www.typesafe.com]
+  */
 
 package com.typesafe.training.akkacollect
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props, Terminated }
+import akka.actor.{ Actor, ActorLogging, ActorRef, ActorSelection, Props, Status, Terminated }
+import akka.pattern.{ ask, pipe }
+import akka.util.Timeout
 
 object Tournament {
 
-  def props(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayerCountPerGame: Int): Props =
-    Props(new Tournament(playerRegistry, scoresRepository, maxPlayerCountPerGame))
+  def props(playerRegistry: ActorSelection, scoresRepository: ActorRef, maxPlayerCountPerGame: Int, askTimeout: Timeout): Props =
+    Props(new Tournament(playerRegistry, scoresRepository, maxPlayerCountPerGame)(askTimeout))
 
   def partitionPlayers(players: Set[ActorRef], maxPlayerCountPerGame: Int): Iterator[Set[ActorRef]] = {
     val remainder = players.size % maxPlayerCountPerGame
@@ -28,30 +30,31 @@ object Tournament {
   }
 }
 
-class Tournament(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayerCountPerGame: Int)
-    extends Actor with SettingsActor with ActorLogging {
+class Tournament(playerRegistry: ActorSelection, scoresRepository: ActorRef, maxPlayerCountPerGame: Int)(implicit askTimeout: Timeout)
+  extends Actor with SettingsActor with ActorLogging {
 
   import Tournament._
+  import context.dispatcher
 
   private var games = Set.empty[ActorRef]
 
   private var scores = Map.empty[String, Long]
 
   override def preStart(): Unit =
-    playerRegistry ! PlayerRegistry.GetPlayers
+    playerRegistry ? PlayerRegistry.GetPlayers pipeTo self
 
   override def receive: Receive =
     waiting
 
   private def waiting: Receive = {
     case PlayerRegistry.Players(players) => onPlayers(players)
+    case Status.Failure(_)               => onPlayersAskTimeout()
   }
 
   private def becomeRunning(players: Set[ActorRef]): Unit = {
     log.info("Starting games")
-    val g = for (players <- partitionPlayers(players, maxPlayerCountPerGame)) yield createGame(players)
-    for (actorRef <- g) context.watch(actorRef)
-    games = games ++ g.toSet
+    for (players <- partitionPlayers(players, maxPlayerCountPerGame))
+      games += context.watch(createGame(players))
     context become running
   }
 
@@ -66,6 +69,11 @@ class Tournament(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayer
       context.stop(self)
     } else
       becomeRunning(players)
+
+  private def onPlayersAskTimeout() = {
+    log.error("No answer from player registry, no games!")
+    context.stop(self)
+  }
 
   private def onGameTerminated(game: ActorRef): Unit = {
     games -= game
