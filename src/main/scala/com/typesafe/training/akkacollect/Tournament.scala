@@ -49,7 +49,7 @@ class Tournament(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayer
 
   private def becomeRunning(players: Set[ActorRef]): Unit = {
     log.info("Starting games")
-    val g = for (players <- partitionPlayers(players, settings.tournament.maxPlayerCountPerGame)) yield createGame(players)
+    val g = for (players <- partitionPlayers(players, maxPlayerCountPerGame)) yield createGame(players)
     for (actorRef <- g) context.watch(actorRef)
     games = games ++ g.toSet
     context become running
