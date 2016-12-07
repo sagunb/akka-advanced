@@ -23,6 +23,10 @@ object PlayerRegistry {
 
   def props: Props =
     Props(new PlayerRegistry)
+
+  def pathFor(address: Address): ActorPath = {
+    RootActorPath(address) / "user" / name
+  }
 }
 
 class PlayerRegistry extends Actor with ActorLogging {
@@ -52,7 +56,4 @@ class PlayerRegistry extends Actor with ActorLogging {
   private def isNameTaken(name: String): Boolean =
     context.children.map(actorRef => actorRef.path.name).toSet.contains(name)
 
-  def pathFor(address: Address): ActorPath = {
-    RootActorPath(address) / "user" / "player-registry"
-  }
 }
