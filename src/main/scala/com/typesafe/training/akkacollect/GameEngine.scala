@@ -64,6 +64,6 @@ class GameEngine(tournamentInterval: FiniteDuration, playerRegistry: Address, sc
 
   protected def createTournament(): ActorRef = {
     import settings.tournament._
-    context.actorOf(Tournament.props(createPlayerRegistry, scoresRepository, maxPlayerCountPerGame))
+    context.actorOf(Tournament.props(createPlayerRegistry, scoresRepository, maxPlayerCountPerGame, askTimeout))
   }
 }
