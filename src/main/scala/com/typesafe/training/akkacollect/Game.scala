@@ -124,9 +124,7 @@ class Game(players: Set[ActorRef], moveCount: Long, moveTimeout: FiniteDuration,
     if (coinPositions.size < players.size)
       coinPositions ++= additionalCoinPositions()
     sendMakeMove(moveNumber)
-
-    context.system.scheduler.scheduleOnce(moveTimeout, self, MoveTimeout)
-
+    context.system.scheduler.scheduleOnce(moveTimeout, self, MoveTimeout(moveNumber))
     context.become(handlingMove(moveNumber))
   }
 
@@ -147,13 +145,12 @@ class Game(players: Set[ActorRef], moveCount: Long, moveTimeout: FiniteDuration,
     }
   }
 
-  private def onMoveTimeout(moveNumber: Long): Unit = {
+  def onMoveTimeout(moveNumber: Long): Unit = {
     if (moveNumber < moveCount)
       becomeHandlingMove(moveNumber + 1)
     else {
       log.info("Game over with scores: {}", scores mkString ", ")
-
-      sender ! GameOver(scores)
+      context.parent ! GameOver(scores)
       context.stop(self)
     }
   }
