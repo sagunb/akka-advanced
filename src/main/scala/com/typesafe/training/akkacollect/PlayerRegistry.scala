@@ -50,6 +50,5 @@ class PlayerRegistry extends Actor with ActorLogging {
     context.actorOf(props, name)
 
   private def isNameTaken(name: String): Boolean =
-    // TODO Return `true` if there's already a player with the given `name`
-    ???
+    context.children.map(actorRef => actorRef.path.name).toSet.contains(name)
 }
