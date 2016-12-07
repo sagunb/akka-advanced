@@ -32,7 +32,6 @@ class Settings(system: ExtendedActorSystem) extends Extension {
 
   object gameEngine {
 
-    implicit val askTimeout: Timeout = app.askTimeout
 
     val tournamentInterval: FiniteDuration =
       Duration(akkollect.getDuration("game-engine.tournament-interval", Millis), Millis)
@@ -46,6 +45,9 @@ class Settings(system: ExtendedActorSystem) extends Extension {
 
     val maxPlayerCountPerGame: Int =
       akkollect getInt "tournament.max-player-count-per-game"
+
+    implicit val askTimeout: Timeout =
+      Duration(akkollect.getDuration("tournament.ask-timeout", Millis), Millis)
   }
 
   private val akkollect = system.settings.config getConfig "akkollect"
