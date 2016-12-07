@@ -37,8 +37,7 @@ class GameEngine(tournamentInterval: FiniteDuration, playerRegistry: ActorRef, s
   when(State.Pausing, tournamentInterval) {
     case Event(StateTimeout, data) =>
       val tournament = startTournament()
-      // TODO Goto `State.Running` using new state data with `Some(tournament)`
-      ???
+      goto(State.Running) using Data(Some(tournament))
   }
 
   when(State.Running) {
@@ -55,8 +54,9 @@ class GameEngine(tournamentInterval: FiniteDuration, playerRegistry: ActorRef, s
 
   private def startTournament(): ActorRef = {
     log.info("Starting tournament")
-    // TODO Create a `Tournament`, watch and return it
-    ???
+    val tournament = context.actorOf(Tournament.props(playerRegistry, scoresRepository, settings.tournament.maxPlayerCountPerGame))
+    context.watch(tournament)
+    tournament
   }
 
   protected def createTournament(): ActorRef = {
