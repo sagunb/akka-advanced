@@ -123,9 +123,9 @@ class Game(players: Set[ActorRef], moveCount: Long, moveTimeout: FiniteDuration,
     if (coinPositions.size < players.size)
       coinPositions ++= additionalCoinPositions()
     sendMakeMove(moveNumber)
-    // TODO Schedule sending `MoveTimeout` to this actor itself after `moveTimeout`
+
     context.system.scheduler.scheduleOnce(moveTimeout, self, MoveTimeout)
-    // TODO Change the behavior to `handlingMove`
+
     context.become(handlingMove(moveNumber))
   }
 
@@ -151,8 +151,9 @@ class Game(players: Set[ActorRef], moveCount: Long, moveTimeout: FiniteDuration,
       becomeHandlingMove(moveNumber + 1)
     else {
       log.info("Game over with scores: {}", scores mkString ", ")
-      // TODO Send `GameOver` to the parent actor, then stop this actor
-      ???
+
+      sender ! GameOver(scores)
+      context.stop(self)
     }
   }
 
