@@ -4,9 +4,10 @@
 
 package com.typesafe.training.akkacollect
 
-import akka.actor.{ Actor, ExtendedActorSystem, Extension, ExtensionKey }
+import akka.actor.{Actor, Address, ExtendedActorSystem, Extension, ExtensionKey}
 import akka.util.Timeout
-import scala.concurrent.duration.{ Duration, FiniteDuration, MILLISECONDS => Millis }
+
+import scala.concurrent.duration.{Duration, FiniteDuration, MILLISECONDS => Millis}
 
 object Settings extends ExtensionKey[Settings]
 
@@ -38,7 +39,7 @@ class Settings(system: ExtendedActorSystem) extends Extension {
 
     val hostName = akkollect getString "game-engine.player-registry.hostname"
     val port = akkollect getInt "game-engine.player-registry.port"
-    val playerRegistryAddress = s"$hostName:$port"
+    val playerRegistryAddress = Address("akka.tcp", system.name, hostName, port)
   }
 
   object tournament {
