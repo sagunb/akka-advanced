@@ -39,7 +39,6 @@ class ScoresRepository extends Actor with ActorLogging {
   }
 
   private def updateScores(update: Map[String, Long]): Unit = {
-    // TODO Merge the given `update` with the `scores` using the `merge` extension method provided by `MapOps`
     scores.merge(update)
     log.info("Updated scores: {}", scores mkString ", ")
     sender() ! ScoresUpdated
