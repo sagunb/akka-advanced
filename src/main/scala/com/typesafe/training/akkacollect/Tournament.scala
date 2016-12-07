@@ -31,6 +31,8 @@ object Tournament {
 class Tournament(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayerCountPerGame: Int)
     extends Actor with SettingsActor with ActorLogging {
 
+  import Tournament._
+
   private var games = Set.empty[ActorRef]
 
   private var scores = Map.empty[String, Long]
@@ -47,8 +49,9 @@ class Tournament(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayer
 
   private def becomeRunning(players: Set[ActorRef]): Unit = {
     log.info("Starting games")
-    // TODO For each element of the result of `partitionPlayers` create a `Game`, add it to `games` and watch it
-    ???
+    val g = for (players <- partitionPlayers(players, settings.tournament.maxPlayerCountPerGame)) yield createGame(players)
+    for (actorRef <- g) context.watch(actorRef)
+    games = games ++ g.toSet
     context become running
   }
 

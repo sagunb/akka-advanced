@@ -102,6 +102,7 @@ class Game(players: Set[ActorRef], moveCount: Long, moveTimeout: FiniteDuration,
     extends Actor with ActorLogging {
 
   import Game._
+  import context.dispatcher
 
   private val fieldWidth = players.size * sparseness
 
