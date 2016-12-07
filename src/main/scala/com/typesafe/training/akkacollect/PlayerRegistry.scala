@@ -4,7 +4,7 @@
 
 package com.typesafe.training.akkacollect
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import akka.actor.{Actor, ActorLogging, ActorPath, ActorRef, Address, Props, RootActorPath}
 
 object PlayerRegistry {
 
@@ -51,4 +51,8 @@ class PlayerRegistry extends Actor with ActorLogging {
 
   private def isNameTaken(name: String): Boolean =
     context.children.map(actorRef => actorRef.path.name).toSet.contains(name)
+
+  def pathFor(address: Address): ActorPath = {
+    RootActorPath(address) / "user" / "player-registry"
+  }
 }
