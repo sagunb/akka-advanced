@@ -4,9 +4,7 @@
 
 package com.typesafe.training.akkacollect
 
-import org.scalatest.{ Matchers, WordSpec }
-
-class GameSpec extends WordSpec with Matchers {
+class GameSpec extends BaseSpec {
 
   import Game._
 

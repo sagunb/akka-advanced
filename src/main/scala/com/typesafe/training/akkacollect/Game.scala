@@ -124,9 +124,9 @@ class Game(players: Set[ActorRef], moveCount: Long, moveTimeout: FiniteDuration,
       coinPositions ++= additionalCoinPositions()
     sendMakeMove(moveNumber)
     // TODO Schedule sending `MoveTimeout` to this actor itself after `moveTimeout`
-    ???
+    context.system.scheduler.schedule(moveTimeout, moveTimeout, self, MoveTimeout)
     // TODO Change the behavior to `handlingMove`
-    ???
+    context.become(handlingMove(moveNumber))
   }
 
   private def handlingMove(moveNumber: Long): Receive = {

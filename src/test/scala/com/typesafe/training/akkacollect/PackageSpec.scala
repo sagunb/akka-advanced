@@ -6,7 +6,7 @@ package com.typesafe.training.akkacollect
 
 import org.scalatest.{ Matchers, WordSpec }
 
-class PackageSpec extends WordSpec with Matchers {
+class PackageSpec extends BaseSpec {
 
   "Calling toOddInt" should {
     "return the next odd integer for even values" in {
