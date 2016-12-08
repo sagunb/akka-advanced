@@ -7,6 +7,7 @@ package com.typesafe.training.akkacollect
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSelection, Address, FSM, Props, RootActorPath, Terminated}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
+import akka.cluster.singleton.{ClusterSingletonProxy, ClusterSingletonProxySettings}
 import akka.routing.FromConfig
 
 import scala.concurrent.duration.FiniteDuration
@@ -38,52 +39,26 @@ class GameEngine(tournamentInterval: FiniteDuration)
 
   import GameEngine._
 
-  startWith(State.Waiting, Data())
+  val scoresRepository = context.actorOf(FromConfig.props(Props[ScoresRepository]), "scores-repository-router")
 
-  override def preStart(): Unit = {
-    Cluster(context.system).subscribe(self, InitialStateAsEvents, classOf[MemberEvent])
-  }
+  val playerRegistryProxy = context.system.actorOf(
+    ClusterSingletonProxy.props(
+      "/user/player-registry",
+      ClusterSingletonProxySettings(context.system)
+    ),
+    "player-registry-proxy"
+  )
 
-  override def postStop(): Unit = {
-    Cluster(context.system).unsubscribe(self)
-  }
-
-  when(State.Waiting) {
-    case Event(MemberUp(member), data) =>
-      if (member.roles.contains("player-registry")) {
-        goto(State.Pausing)
-      } else {
-        stay
-      }
-  }
+  startWith(State.Pausing, Data())
 
   when(State.Pausing, tournamentInterval) {
     case Event(StateTimeout, data) =>
-      if (getNumPlayerRegistryMembers() >= 1) {
         val tournament = startTournament()
         goto(State.Running) using Data(Some(tournament))
-      } else {
-        stay
-      }
-
-    case Event(MemberRemoved(member, memberStatus), data) =>
-      if (getNumPlayerRegistryMembers() == 0) {
-        goto(State.Waiting)
-      } else {
-        stay
-      }
-
-    case Event(MemberUp(member), data) =>
-      stay
   }
 
   when(State.Running) {
-    case Event(Terminated(_), data) =>
-      if (getNumPlayerRegistryMembers() >= 1) {
-        goto(State.Pausing) using Data()
-      } else {
-        goto(State.Waiting) using Data()
-      }
+    case Event(Terminated(_), data) => goto(State.Pausing) using Data()
   }
 
   onTransition {
@@ -93,27 +68,13 @@ class GameEngine(tournamentInterval: FiniteDuration)
 
   initialize()
 
-  def getNumPlayerRegistryMembers(): Int = {
-    Cluster(context.system).state.members.count(member => member.roles.contains("player-registry"))
-  }
-
   protected def startTournament(): ActorRef = {
     log.info("Starting tournament")
     context.watch(createTournament())
   }
 
-  protected def createPlayerRegistry(): ActorSelection = {
-    // TODO : fix this s@@@ maybe
-    val playerRegistry = Cluster(context.system).state.members.find(member => member.roles.contains("player-registry")).get
-    val path = PlayerRegistry.pathFor(playerRegistry.address)
-    context actorSelection path
-  }
-
-  val scoresRepository = context.actorOf(FromConfig.props(Props[ScoresRepository]), "scores-repository-router")
-
   protected def createTournament(): ActorRef = {
     import settings.tournament._
-
-    context.actorOf(Tournament.props(createPlayerRegistry(), scoresRepository, maxPlayerCountPerGame, askTimeout))
+    context.actorOf(Tournament.props(playerRegistryProxy, scoresRepository, maxPlayerCountPerGame, askTimeout))
   }
 }

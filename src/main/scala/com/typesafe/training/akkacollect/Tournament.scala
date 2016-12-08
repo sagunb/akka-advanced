@@ -14,7 +14,7 @@ import scala.concurrent.duration._
 
 object Tournament {
 
-  def props(playerRegistry: ActorSelection, scoresRepository: ActorRef, maxPlayerCountPerGame: Int, askTimeout: Timeout): Props =
+  def props(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayerCountPerGame: Int, askTimeout: Timeout): Props =
     Props(new Tournament(playerRegistry, scoresRepository, maxPlayerCountPerGame)(askTimeout))
 
   def partitionPlayers(players: Set[ActorRef], maxPlayerCountPerGame: Int): Iterator[Set[ActorRef]] = {
@@ -34,7 +34,7 @@ object Tournament {
   }
 }
 
-class Tournament(playerRegistry: ActorSelection, scoresRepository: ActorRef, maxPlayerCountPerGame: Int)(implicit askTimeout: Timeout)
+class Tournament(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayerCountPerGame: Int)(implicit askTimeout: Timeout)
   extends Actor with SettingsActor with ActorLogging {
 
   import Tournament._

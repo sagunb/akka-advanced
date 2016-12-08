@@ -1,10 +1,11 @@
 /**
- * Copyright © 2014, 2015 Typesafe, Inc. All rights reserved. [http://www.typesafe.com]
- */
+  * Copyright © 2014, 2015 Typesafe, Inc. All rights reserved. [http://www.typesafe.com]
+  */
 
 package com.typesafe.training.akkacollect
 
-import akka.actor.{ ActorRef, ActorSystem, Props }
+import akka.actor.{ ActorRef, ActorSystem, PoisonPill, Props }
+import akka.cluster.singleton._
 import akka.pattern.ask
 import scala.annotation.tailrec
 import scala.io.StdIn
@@ -14,8 +15,22 @@ object PlayerRegistryApp extends BaseApp with Terminal {
   override protected val parser: CommandParser.Parser[Command] =
     CommandParser.register | CommandParser.shutdown
 
-  override def createTop(system: ActorSystem, settings: Settings): ActorRef =
-    system.actorOf(PlayerRegistry.props, PlayerRegistry.name)
+  override def createTop(system: ActorSystem, settings: Settings): ActorRef = {
+    val manager = system.actorOf(
+      ClusterSingletonManager.props(
+        PlayerRegistry.props,
+        PoisonPill,
+        ClusterSingletonManagerSettings(system).withRole("player-registry")),
+      "player-registry"
+    )
+    val proxy = system.actorOf(
+      ClusterSingletonProxy.props(
+        s"/user/player-registry",
+        ClusterSingletonProxySettings(system).withRole("player-registry")),
+      "player-registry-proxy"
+    )
+    proxy
+  }
 
   @tailrec
   override protected def commandLoop(system: ActorSystem, settings: Settings, top: ActorRef): Unit = {
