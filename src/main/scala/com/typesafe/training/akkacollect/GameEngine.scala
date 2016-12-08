@@ -6,7 +6,7 @@ package com.typesafe.training.akkacollect
 
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSelection, Address, FSM, Props, RootActorPath, Terminated}
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent.{ClusterDomainEvent, MemberEvent, MemberRemoved, MemberUp}
+import akka.cluster.ClusterEvent._
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -40,7 +40,7 @@ class GameEngine(tournamentInterval: FiniteDuration, scoresRepository: ActorRef)
   startWith(State.Waiting, Data())
 
   override def preStart(): Unit = {
-    Cluster(context.system).subscribe(self, classOf[MemberEvent])
+    Cluster(context.system).subscribe(self, InitialStateAsEvents, classOf[MemberEvent])
   }
 
   override def postStop(): Unit = {
