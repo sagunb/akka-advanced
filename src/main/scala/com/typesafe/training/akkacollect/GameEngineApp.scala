@@ -18,8 +18,7 @@ object GameEngineApp extends BaseApp with Terminal {
   override def createTop(system: ActorSystem, settings: Settings): ActorRef = {
     import settings.gameEngine._
     val playerRegistry = system.actorOf(PlayerRegistry.props, PlayerRegistry.name)
-    val scoresRepository = system.actorOf(ScoresRepository.props, ScoresRepository.name)
-    system.actorOf(GameEngine.props(tournamentInterval, scoresRepository), GameEngine.name)
+    system.actorOf(GameEngine.props(tournamentInterval), GameEngine.name)
     playerRegistry // REMOVE This return value to make the player registry handle commands instead of the game engine is only needed initially
   }
 

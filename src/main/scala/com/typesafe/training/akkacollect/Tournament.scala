@@ -4,9 +4,13 @@
 
 package com.typesafe.training.akkacollect
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, ActorSelection, Props, Status, Terminated }
-import akka.pattern.{ ask, pipe }
+import akka.actor.Status.Failure
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSelection, Props, Status, Terminated}
+import akka.pattern.{ask, pipe}
 import akka.util.Timeout
+import com.typesafe.training.akkacollect.ScoresRepository.ScoresUpdated
+
+import scala.concurrent.duration._
 
 object Tournament {
 
@@ -35,6 +39,7 @@ class Tournament(playerRegistry: ActorSelection, scoresRepository: ActorRef, max
 
   import Tournament._
   import context.dispatcher
+  implicit val timeout: Duration = 5 seconds
 
   private var games = Set.empty[ActorRef]
 
@@ -61,6 +66,10 @@ class Tournament(playerRegistry: ActorSelection, scoresRepository: ActorRef, max
   private def running: Receive = {
     case Game.GameOver(gameScores) => scores ++= gameScores
     case Terminated(game)          => onGameTerminated(game)
+    case Failure =>
+      log.info("No answer form scores repository, scores might have been lost! at error")
+      context.stop(self)
+    case ScoresUpdated => context.stop(self)
   }
 
   private def onPlayers(players: Set[ActorRef]): Unit =
@@ -79,8 +88,8 @@ class Tournament(playerRegistry: ActorSelection, scoresRepository: ActorRef, max
     games -= game
     if (games.isEmpty) {
       log.info("Tournament over with scores: {}", scores mkString ", ")
-      scoresRepository ! ScoresRepository.UpdateScores(scores)
-      context.stop(self)
+      val status = scoresRepository ? ScoresRepository.UpdateScores(scores)
+      status pipeTo self
     }
   }
 

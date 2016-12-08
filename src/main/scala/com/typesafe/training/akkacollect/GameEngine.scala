@@ -7,6 +7,7 @@ package com.typesafe.training.akkacollect
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSelection, Address, FSM, Props, RootActorPath, Terminated}
 import akka.cluster.Cluster
 import akka.cluster.ClusterEvent._
+import akka.routing.FromConfig
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -28,11 +29,11 @@ object GameEngine {
   val name: String =
     "game-engine"
 
-  def props(tournamentInterval: FiniteDuration, scoresRepository: ActorRef): Props =
-    Props(new GameEngine(tournamentInterval, scoresRepository))
+  def props(tournamentInterval: FiniteDuration): Props =
+    Props(new GameEngine(tournamentInterval))
 }
 
-class GameEngine(tournamentInterval: FiniteDuration, scoresRepository: ActorRef)
+class GameEngine(tournamentInterval: FiniteDuration)
     extends Actor with FSM[GameEngine.State, GameEngine.Data] with SettingsActor with ActorLogging {
 
   import GameEngine._
@@ -108,8 +109,11 @@ class GameEngine(tournamentInterval: FiniteDuration, scoresRepository: ActorRef)
     context actorSelection path
   }
 
+  val scoresRepository = context.actorOf(FromConfig.props(Props[ScoresRepository]), "scores-repository-router")
+
   protected def createTournament(): ActorRef = {
     import settings.tournament._
+
     context.actorOf(Tournament.props(createPlayerRegistry(), scoresRepository, maxPlayerCountPerGame, askTimeout))
   }
 }
