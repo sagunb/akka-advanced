@@ -58,7 +58,7 @@ class GameEngine(tournamentInterval: FiniteDuration, scoresRepository: ActorRef)
 
   when(State.Pausing, tournamentInterval) {
     case Event(StateTimeout, data) =>
-      if (getNumPlayerRegistryMembers() > 1) {
+      if (getNumPlayerRegistryMembers() >= 1) {
         val tournament = startTournament()
         goto(State.Running) using Data(Some(tournament))
       } else {
@@ -78,7 +78,7 @@ class GameEngine(tournamentInterval: FiniteDuration, scoresRepository: ActorRef)
 
   when(State.Running) {
     case Event(Terminated(_), data) =>
-      if (getNumPlayerRegistryMembers() > 1) {
+      if (getNumPlayerRegistryMembers() >= 1) {
         goto(State.Pausing) using Data()
       } else {
         goto(State.Waiting) using Data()
