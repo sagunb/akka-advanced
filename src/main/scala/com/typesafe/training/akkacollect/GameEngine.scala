@@ -43,9 +43,8 @@ class GameEngine(tournamentInterval: FiniteDuration)
 
   val playerRegistryProxy = context.system.actorOf(
     ClusterSingletonProxy.props(
-      "/user/player-registry",
-      ClusterSingletonProxySettings(context.system)
-    ),
+      s"/user/player-registry",
+      ClusterSingletonProxySettings(context.system).withRole("player-registry")),
     "player-registry-proxy"
   )
 
