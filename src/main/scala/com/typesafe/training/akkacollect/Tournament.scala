@@ -64,7 +64,9 @@ class Tournament(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayer
   }
 
   private def running: Receive = {
-    case Game.GameOver(gameScores) => scores ++= gameScores
+    case Game.GameOver(gameScores) =>
+      scores ++= gameScores
+      log.info("Tournament over with scores: {}", scores mkString ", ")
     case Terminated(game)          => onGameTerminated(game)
     case Failure =>
       log.info("No answer form scores repository, scores might have been lost! at error")
@@ -87,7 +89,6 @@ class Tournament(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayer
   private def onGameTerminated(game: ActorRef): Unit = {
     games -= game
     if (games.isEmpty) {
-      log.info("Tournament over with scores: {}", scores mkString ", ")
       val status = scoresRepository ? ScoresRepository.UpdateScores(scores)
       status pipeTo self
     }
