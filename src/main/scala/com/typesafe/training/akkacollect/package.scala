@@ -34,4 +34,13 @@ package object akkacollect {
         ((left ++ rightUniques) /: rightDuplicates) { case (acc, (a, b)) => acc + (a -> numeric.plus(acc(a), b)) }
       }
   }
+
+  implicit class VectorOps[A](as: Vector[A]) {
+    def -(a: A): Vector[A] =
+      as diff Vector(a)
+  }
+
+  val VNil: Vector[Nothing] =
+    Vector.empty
+
 }

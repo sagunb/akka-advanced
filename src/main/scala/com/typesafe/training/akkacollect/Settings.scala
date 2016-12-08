@@ -32,14 +32,8 @@ class Settings(system: ExtendedActorSystem) extends Extension {
   }
 
   object gameEngine {
-
-
     val tournamentInterval: FiniteDuration =
       Duration(akkollect.getDuration("game-engine.tournament-interval", Millis), Millis)
-
-    val hostName = akkollect getString "game-engine.player-registry.hostname"
-    val port = akkollect getInt "game-engine.player-registry.port"
-    val playerRegistryAddress = Address("akka.tcp", system.name, hostName, port)
   }
 
   object tournament {

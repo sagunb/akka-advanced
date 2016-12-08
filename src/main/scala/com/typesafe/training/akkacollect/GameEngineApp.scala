@@ -19,7 +19,7 @@ object GameEngineApp extends BaseApp with Terminal {
     import settings.gameEngine._
     val playerRegistry = system.actorOf(PlayerRegistry.props, PlayerRegistry.name)
     val scoresRepository = system.actorOf(ScoresRepository.props, ScoresRepository.name)
-    system.actorOf(GameEngine.props(tournamentInterval, playerRegistryAddress, scoresRepository), GameEngine.name)
+    system.actorOf(GameEngine.props(tournamentInterval, scoresRepository), GameEngine.name)
     playerRegistry // REMOVE This return value to make the player registry handle commands instead of the game engine is only needed initially
   }
 
