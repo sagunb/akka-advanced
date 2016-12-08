@@ -9,11 +9,15 @@ class GameEngineSpec extends BaseAkkaSpec {
 
   "The game engine actor" should {
 
-    "transition into GameEngine.State.Running with a tournament" in pendingUntilFixed {
+    "transition into GameEngine.State.Running with a tournament" in {
       val engine = TestFSMRef(new GameEngine(
         tournamentInterval = 1 millisecond
       ){
         override def createScoresRepository(): ActorRef = {
+          TestProbe().ref
+        }
+
+        override def createPlayerRegistry(): ActorRef = {
           TestProbe().ref
         }
       })
@@ -24,7 +28,7 @@ class GameEngineSpec extends BaseAkkaSpec {
       system.stop(engine)
     }
 
-    "keep starting new tournaments when a tournament ends" in pendingUntilFixed {
+    "keep starting new tournaments when a tournament ends" in {
       val tournament = TestProbe()
 
       class TestEngine extends GameEngine(
@@ -37,7 +41,7 @@ class GameEngineSpec extends BaseAkkaSpec {
         // get stuck in the running state after "creating" two tournaments
         var tournaments = Seq(tournament.ref, system.deadLetters)
 
-        override def createTournament(playerRegistry: ActorSelection): ActorRef = {
+        override def createTournament(): ActorRef = {
           val current +: next = tournaments
           tournaments = next
 
@@ -45,6 +49,10 @@ class GameEngineSpec extends BaseAkkaSpec {
         }
 
         override def createScoresRepository(): ActorRef = {
+          TestProbe().ref
+        }
+
+        override def createPlayerRegistry(): ActorRef = {
           TestProbe().ref
         }
       }
