@@ -11,9 +11,12 @@ class GameEngineSpec extends BaseAkkaSpec {
 
     "transition into GameEngine.State.Running with a tournament" in pendingUntilFixed {
       val engine = TestFSMRef(new GameEngine(
-        tournamentInterval = 1 millisecond,
-        scoresRepository = system.deadLetters
-      ))
+        tournamentInterval = 1 millisecond
+      ){
+        override def createScoresRepository(): ActorRef = {
+          TestProbe().ref
+        }
+      })
 
       awaitCond(engine.stateName == GameEngine.State.Running)
       awaitCond(engine.stateData.tournament.isDefined)
@@ -25,8 +28,7 @@ class GameEngineSpec extends BaseAkkaSpec {
       val tournament = TestProbe()
 
       class TestEngine extends GameEngine(
-        tournamentInterval = 1 millisecond,
-        scoresRepository = system.deadLetters
+        tournamentInterval = 1 millisecond
       ) {
 
         // it will toggle back and forth as tournaments ends, so
@@ -40,6 +42,10 @@ class GameEngineSpec extends BaseAkkaSpec {
           tournaments = next
 
           current
+        }
+
+        override def createScoresRepository(): ActorRef = {
+          TestProbe().ref
         }
       }
       val engine = TestFSMRef(new TestEngine)
