@@ -15,10 +15,15 @@
             <pattern>%date{HH:mm:ss} %-5level [%X{akkaSource}] - %msg%n</pattern>
         </encoder>
     </appender>
-    
+
     <logger name="akka" level="ERROR" />
 
     <logger name="com.typesafe.training.akkacollect" level="warn" additivity="false">
+        <appender-ref ref="console"/>
+        <appender-ref ref="file"/>
+    </logger>
+
+    <logger name="com.typesafe.training.akkacollect.GameEngine" level="error" additivity="false">
         <appender-ref ref="console"/>
         <appender-ref ref="file"/>
     </logger>
