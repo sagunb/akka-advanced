@@ -96,13 +96,13 @@ class GameEngine(tournamentInterval: FiniteDuration, scoresRepository: ActorRef)
     Cluster(context.system).state.members.count(member => member.roles.contains("player-registry"))
   }
 
-  private def startTournament(): ActorRef = {
+  protected def startTournament(): ActorRef = {
     log.info("Starting tournament")
     context.watch(createTournament())
   }
 
-  private def createPlayerRegistry(): ActorSelection = {
-    // TODO : fix this s@@@
+  protected def createPlayerRegistry(): ActorSelection = {
+    // TODO : fix this s@@@ maybe
     val playerRegistry = Cluster(context.system).state.members.find(member => member.roles.contains("player-registry")).get
     val path = PlayerRegistry.pathFor(playerRegistry.address)
     context actorSelection path
