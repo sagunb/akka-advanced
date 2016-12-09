@@ -11,17 +11,19 @@ class GameActorSpec extends BaseAkkaSpec {
   "The game actor" should {
 
     val gameProps = Props(new Game(
-      players = Set(system.deadLetters, system.deadLetters),
+      players = Set("Player1", "Player2"),
       moveCount = 1,
       moveTimeout = 1.millisecond,
       sparseness = 23
-    ))
+    ){
+      override protected def tellPlayer(player: String, message: Any): Unit = {}
+    })
 
     "end move after timeout passed" in {
       val probe = TestProbe()
       val onMoveTimmeoutWasCalled = Promise[Unit]()
       val game = system.actorOf(Props(new Game(
-        players = Set(system.deadLetters, system.deadLetters),
+        players = Set("Player1", "Player2"),
         moveCount = 1,
         moveTimeout = 1.millisecond,
         sparseness = 23) {
@@ -29,6 +31,7 @@ class GameActorSpec extends BaseAkkaSpec {
           onMoveTimmeoutWasCalled.success(Unit)
           super.onMoveTimeout(moveNumber)
         }
+        override protected def tellPlayer(player: String, message: Any): Unit = {}
       }))
 
 
@@ -41,11 +44,13 @@ class GameActorSpec extends BaseAkkaSpec {
     "end the game after the number of moves are up" in {
       val probe = TestProbe()
       val game = system.actorOf(Props(new Game(
-        players = Set(system.deadLetters, system.deadLetters),
+        players = Set("Player1", "Player2"),
         moveCount = 1,
         moveTimeout = 1.millisecond,
         sparseness = 23
-      )))
+      ){
+        override protected def tellPlayer(player: String, message: Any): Unit = {}
+      }))
       probe.watch(game)
 
       probe.expectTerminated(game)
@@ -57,11 +62,13 @@ class GameActorSpec extends BaseAkkaSpec {
       val parentGotScore = Promise[Unit]()
       class Parent extends Actor {
         val game = context.actorOf(Props(new Game(
-          players = Set(system.deadLetters, system.deadLetters),
+          players = Set("Player1", "Player2"),
           moveCount = 1,
           moveTimeout = 1.millisecond,
           sparseness = 23
-        )))
+        ){
+          override protected def tellPlayer(player: String, message: Any): Unit = {}
+        }))
 
         def receive = {
           case _ :GameOver => parentGotScore.success(Unit)
