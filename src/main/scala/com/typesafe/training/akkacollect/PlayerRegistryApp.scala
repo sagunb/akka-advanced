@@ -15,6 +15,11 @@ object PlayerRegistryApp extends BaseApp with Terminal {
   override protected val parser: CommandParser.Parser[Command] =
     CommandParser.register | CommandParser.shutdown
 
+  override def initialize(system: ActorSystem, settings: Settings): Unit = {
+    system.actorOf(SharedJournalSetter.props, "shared-journal-setter")
+    PlayerSharding(system).start
+  }
+
   override def createTop(system: ActorSystem, settings: Settings): ActorRef = {
     val manager = system.actorOf(
       ClusterSingletonManager.props(

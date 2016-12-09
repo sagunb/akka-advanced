@@ -16,7 +16,7 @@ object PlayerRegistry {
 
   case object GetPlayers
 
-  case class Players(players: Set[ActorRef])
+  case class Players(players: Set[String])
 
   val name: String =
     "player-registry"
@@ -33,10 +33,13 @@ class PlayerRegistry extends Actor with ActorLogging {
 
   import PlayerRegistry._
 
+  var players: collection.mutable.Set[String] = collection.mutable.Set()
+  val playerSharding = PlayerSharding(context.system)
+
   override def receive: Receive = {
     case RegisterPlayer(name, _) if isNameTaken(name) => playerNameTaken(name: String)
     case RegisterPlayer(name, props)                  => registerPlayer(name, props)
-    case GetPlayers                                   => sender() ! Players(context.children.toSet)
+    case GetPlayers                                   => sender() ! Players(players.toSet)
   }
 
   private def playerNameTaken(name: String): Unit = {
@@ -50,10 +53,12 @@ class PlayerRegistry extends Actor with ActorLogging {
     sender() ! PlayerRegistered(name)
   }
 
-  protected def createPlayer(name: String, props: Props): ActorRef =
-    context.actorOf(props, name)
+  protected def createPlayer(name: String, props: Props): Unit  = {
+    players.add(name)
+    playerSharding.tellPlayer(name, PlayerSharding.Player.Initialize(props))
+  }
 
   private def isNameTaken(name: String): Boolean =
-    context.children.map(actorRef => actorRef.path.name).toSet.contains(name)
+    players.contains(name)
 
 }

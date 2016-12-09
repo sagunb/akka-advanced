@@ -22,6 +22,11 @@ object GameEngineApp extends BaseApp with Terminal {
     playerRegistry // REMOVE This return value to make the player registry handle commands instead of the game engine is only needed initially
   }
 
+  override def initialize(system: ActorSystem, settings: Settings): Unit = {
+    system.actorOf(SharedJournalSetter.props, "shared-journal-setter")
+    PlayerSharding(system).startProxy()
+  }
+
   @tailrec
   override protected def commandLoop(system: ActorSystem, settings: Settings, top: ActorRef): Unit = {
     Command(StdIn.readLine()) match {

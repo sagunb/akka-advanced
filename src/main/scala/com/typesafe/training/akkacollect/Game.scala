@@ -4,7 +4,10 @@
 
 package com.typesafe.training.akkacollect
 
-import akka.actor.{ Actor, ActorLogging, ActorRef, Props }
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.cluster.sharding.ClusterSharding
+import com.typesafe.training.akkacollect.PlayerSharding.Player.Envelope
+
 import scala.annotation.tailrec
 import scala.concurrent.duration.FiniteDuration
 import scala.math.abs
@@ -94,15 +97,21 @@ object Game {
       abs(this.x - that.x) + abs(this.y - that.y)
   }
 
-  def props(players: Set[ActorRef], moveCount: Int, moveTimeout: FiniteDuration, sparseness: Int): Props =
+  def props(players: Set[String], moveCount: Int, moveTimeout: FiniteDuration, sparseness: Int): Props =
     Props(new Game(players, moveCount, moveTimeout, sparseness))
 }
 
-class Game(players: Set[ActorRef], moveCount: Long, moveTimeout: FiniteDuration, sparseness: Int)
+class Game(players: Set[String], moveCount: Long, moveTimeout: FiniteDuration, sparseness: Int)
     extends Actor with ActorLogging {
 
   import Game._
   import context.dispatcher
+
+  val playerSharding = PlayerSharding(context.system)
+
+  protected def tellPlayer(name: String, msg: Any): Unit = {
+    playerSharding.tellPlayer(name, msg)
+  }
 
   private val fieldWidth = players.size * sparseness
 
@@ -113,7 +122,7 @@ class Game(players: Set[ActorRef], moveCount: Long, moveTimeout: FiniteDuration,
   private var (playerPositions, coinPositions) = initialPositions()
 
   override def preStart(): Unit = {
-    log.info("Game started with players: {}", players map (_.path.name) mkString ", ")
+    log.info("Game started with players: {}", players mkString ", ")
     becomeHandlingMove(1)
   }
 
@@ -170,13 +179,13 @@ class Game(players: Set[ActorRef], moveCount: Long, moveTimeout: FiniteDuration,
         if (position distanceFrom playerPosition) <= sectorRadius
       } yield position - playerPosition
     }
-    for (playerActor <- players; player = playerActor.path.name)
-      playerActor ! MakeMove(moveNumber, relativePlayerPositions(player), relativeCoinPositions(player))
+    for (player <- players)
+      tellPlayer(player, MakeMove(moveNumber, relativePlayerPositions(player), relativeCoinPositions(player)))
   }
 
   private def initialPositions(): (Map[String, Position], Set[Position]) = {
     val (playerPositions, coinPositions) = randomPositions(players.size * 2) splitAt players.size
-    val playerToPosition = (players map (_.path.name) zip playerPositions).toMap
+    val playerToPosition = (players zip playerPositions).toMap
     (playerToPosition, coinPositions)
   }
 

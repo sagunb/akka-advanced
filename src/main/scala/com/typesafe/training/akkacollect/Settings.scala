@@ -45,6 +45,11 @@ class Settings(system: ExtendedActorSystem) extends Extension {
       Duration(akkollect.getDuration("tournament.ask-timeout", Millis), Millis)
   }
 
+  object playerRegistry {
+    val shardCount: Int =
+      akkollect getInt "player-registry.shard-count"
+  }
+
   private val akkollect = system.settings.config getConfig "akkollect"
 }
 

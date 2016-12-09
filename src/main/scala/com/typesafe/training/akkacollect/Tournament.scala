@@ -17,7 +17,7 @@ object Tournament {
   def props(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayerCountPerGame: Int, askTimeout: Timeout): Props =
     Props(new Tournament(playerRegistry, scoresRepository, maxPlayerCountPerGame)(askTimeout))
 
-  def partitionPlayers(players: Set[ActorRef], maxPlayerCountPerGame: Int): Iterator[Set[ActorRef]] = {
+  def partitionPlayers(players: Set[String], maxPlayerCountPerGame: Int): Iterator[Set[String]] = {
     val remainder = players.size % maxPlayerCountPerGame
     val partitions =
       if (remainder == 0)
@@ -56,7 +56,7 @@ class Tournament(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayer
     case Status.Failure(_)               => onPlayersAskTimeout()
   }
 
-  private def becomeRunning(players: Set[ActorRef]): Unit = {
+  private def becomeRunning(players: Set[String]): Unit = {
     log.info("Starting games")
     for (players <- partitionPlayers(players, maxPlayerCountPerGame))
       games += context.watch(createGame(players))
@@ -74,7 +74,7 @@ class Tournament(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayer
     case ScoresUpdated => context.stop(self)
   }
 
-  private def onPlayers(players: Set[ActorRef]): Unit =
+  private def onPlayers(players: Set[String]): Unit =
     if (players.isEmpty) {
       log.info("No players, no games")
       context.stop(self)
@@ -94,7 +94,7 @@ class Tournament(playerRegistry: ActorRef, scoresRepository: ActorRef, maxPlayer
     }
   }
 
-  protected def createGame(players: Set[ActorRef]): ActorRef = {
+  protected def createGame(players: Set[String]): ActorRef = {
     import settings.game._
     context.actorOf(Game.props(players, moveCount, moveTimeout, sparseness))
   }
